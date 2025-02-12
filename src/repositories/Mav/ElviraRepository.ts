@@ -1,4 +1,5 @@
-import * as Api from '../../api/ElviraInformationApi.js';
+import * as InformationApi from '../../api/ElviraInformationApi.js';
+import * as OfferRequestApi from '../../api/ElviraOfferRequestApi.js';
 
 /**
  * Represents a scheduled train, which is departing from the station.
@@ -22,7 +23,7 @@ export type ScheduledTrain = {
     currendDelay: number,
     track: string | null,
 } & Pick<
-    Api.StationScheduler,
+    InformationApi.StationScheduler,
     'code' | 'startStation' | 'endStation'
 > & (
     | DepartingScheduledTrain
@@ -32,8 +33,8 @@ export type ScheduledTrain = {
 /**
  * Converts an API station scheduler to a scheduled train.
  */
-const mapApiStationSchedulerToScheduledTrain = (s: Api.StationScheduler): ScheduledTrain => {
-    const timing = Api.isDepartingStationScheduler(s)
+const mapApiStationSchedulerToScheduledTrain = (s: InformationApi.StationScheduler): ScheduledTrain => {
+    const timing = InformationApi.isDepartingStationScheduler(s)
         ? <DepartingScheduledTrain>{
             start: new Date(s.start),
             arrive: s.arrive ? new Date(s.arrive) : null,
@@ -59,10 +60,10 @@ const mapApiStationSchedulerToScheduledTrain = (s: Api.StationScheduler): Schedu
  * Get the timetable of a station.
  */
 export const getStationTimetable = async (stationCode: string): Promise<ScheduledTrain[]> => {
-    const apiResponse = await Api.getTimetable(stationCode);
+    const apiResponse = await InformationApi.getTimetable(stationCode);
 
     // Remove duplicates (same train can be in both arrival and departure).
-    const stationSchedulers: Api.StationScheduler[] = [];
+    const stationSchedulers: InformationApi.StationScheduler[] = [];
     const processedCodes = new Set<string>();
     for (const trainScheduler of [...apiResponse.arrivalScheduler, ...apiResponse.departureScheduler]) {
         if (processedCodes.has(trainScheduler.code)) {
@@ -75,11 +76,41 @@ export const getStationTimetable = async (stationCode: string): Promise<Schedule
 
     stationSchedulers.sort((a, b) => {
         // FIXME: what if separate trains arrive and depart at the same time?
-        const aTime = new Date(Api.isDepartingStationScheduler(a) ? a.start : a.arrive);
-        const bTime = new Date(Api.isDepartingStationScheduler(b) ? b.start : b.arrive);
+        const aTime = new Date(InformationApi.isDepartingStationScheduler(a) ? a.start : a.arrive);
+        const bTime = new Date(InformationApi.isDepartingStationScheduler(b) ? b.start : b.arrive);
 
         return aTime.getTime() - bTime.getTime();
     });
 
     return stationSchedulers.map(mapApiStationSchedulerToScheduledTrain);
+}
+
+interface Station {
+    code: string;
+    name: string;
+}
+
+export const getStationList = async (): Promise<Station[]> => {
+    const apiResponse = await OfferRequestApi.getStationList();
+
+    const trainModality = OfferRequestApi.StationModalities['train'];
+
+    const apiStations = apiResponse.filter((s) => {
+        if (s.isAlias) {
+            return false;
+        }
+
+        if (!s.modalities) {
+            return false;
+        }
+
+        return s.modalities.some((m) => m.code === trainModality);
+    });
+
+    return apiStations.map((s): Station => {
+        return {
+            code: s.code,
+            name: s.name,
+        };
+    });
 }

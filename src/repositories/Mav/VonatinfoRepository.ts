@@ -15,20 +15,19 @@ export interface RealtimeTrain {
 const mapApiTrainToRealtimeTrain = (
     train: Api.GetDataResponse['d']['result']['Trains']['Train'][0],
 ): RealtimeTrain => {
-    const operator = train['@Menetvonal'];
-    const operatorPrefix = Api.OperatorPrefixes.get(operator);
-
-    let trainNumber = train['@TrainNumber'];
-
-    if (operatorPrefix === undefined) {
-        throw new Error(`Unknown operator for train ${trainNumber}: ${operator}`);
+    if (!(train['@Menetvonal'] in Api.OperatorPrefixes)) {
+        throw new Error(`Unknown operator for train ${train['@TrainNumber']}: ${train['@Menetvonal']}`);
     }
+
+    const operator = train['@Menetvonal'] as keyof typeof Api.OperatorPrefixes;
+    const operatorPrefix = Api.OperatorPrefixes[operator];
+    let trainNumber = train['@TrainNumber'];
 
     if (!trainNumber.startsWith(operatorPrefix)) {
         throw new Error(`Invalid train number: ${trainNumber} operated by ${operator}, expected prefix: ${operatorPrefix}`);
     }
 
-    trainNumber = trainNumber.slice(operatorPrefix.length);
+    trainNumber = trainNumber.slice(operatorPrefix.length).toUpperCase();
 
     return {
         trainNumber,
