@@ -1,6 +1,7 @@
 import DataSource from "./data-source.js";
 import telegramConfig from "./config/telegram.js";
 import { Context, Telegraf } from "telegraf";
+import LogMiddleware from "./middlewares/LogMiddleware.js";
 import StationCommand from './middlewares/StationCommand.js';
 import TrainComand from './middlewares/TrainCommand.js';
 import StartCommand from "./middlewares/StartCommand.js";
@@ -16,6 +17,7 @@ const bot = new Telegraf(telegramConfig.botToken);
 
 // Here we define all the middlewares that we want to use.
 const middlewares = [
+    LogMiddleware,
     StartCommand,
     HelpCommand,
     StationCommand,
@@ -39,7 +41,6 @@ bot.on('message', async (context) => {
         ? chat.username ?? chat.first_name
         : chat.title;
 
-    console.log(context.message);
     await context.reply('Hello World!');
 });
 
