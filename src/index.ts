@@ -6,6 +6,7 @@ import StationCommand from './middlewares/StationCommand.js';
 import TrainComand from './middlewares/TrainCommand.js';
 import StartCommand from "./middlewares/StartCommand.js";
 import HelpCommand from "./middlewares/HelpCommand.js";
+import LocationMiddleware from "./middlewares/LocationMiddleware.js";
 import { Update } from "telegraf/types";
 import CacheManager from '@type-cacheable/core';
 import NodeCache from 'node-cache';
@@ -22,6 +23,7 @@ const middlewares = [
     HelpCommand,
     StationCommand,
     TrainComand,
+    LocationMiddleware,
 ] as const;
 
 // Register all the middlewares.

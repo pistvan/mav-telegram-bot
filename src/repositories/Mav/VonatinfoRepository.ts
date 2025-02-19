@@ -3,7 +3,7 @@ import * as Api from '../../api/VonatinfoApi.js';
 
 export interface RealtimeTrain {
     code: string,
-    operator: string,
+    operator: keyof typeof Api.OperatorPrefixes,
     delay: number,
     /**
      * In GeoJSON format: `[longitude, latitude]`
