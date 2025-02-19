@@ -3,6 +3,16 @@ import ElviraRepository,{ ScheduledTrain } from "../repositories/Mav/ElviraRepos
 import { CommandInterface, MiddlewareInterface } from "./MiddlewareInterface.js";
 import formatToTime from "../utils/formatToTime.js";
 
+/**
+ * Maximum number of trains to display.
+ */
+const MAX_NUMBER_OF_TRAINS = 12;
+
+/**
+ * Maximum number of hours to look ahead.
+ */
+const MAX_HOURS = 6;
+
 const command: CommandInterface['command'] = ['allomas', 'station'];
 
 const formatTrain = (train: ScheduledTrain): string => {
@@ -41,11 +51,13 @@ const middleware = Composer.command(command, async (context) => {
         return;
     }
 
-    const timetable = await ElviraRepository.getStationTimetable(station.code);
+    const timetable = await ElviraRepository.getStationTimetable(station.code, MAX_HOURS);
 
-    const trains = timetable.map(formatTrain);
+    const trains = timetable
+        .slice(0, MAX_NUMBER_OF_TRAINS)
+        .map(formatTrain);
 
-    await context.reply(trains.join(`\n`));
+    await context.reply(`Ezek a vonatok indulnak ${station.name} állomásról:\n${trains.join(`\n`)}`);
 });
 
 export default {
