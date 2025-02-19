@@ -1,5 +1,6 @@
 import MavConfig from '../config/mav.js';
 import fetch from '../utils/fetch.js';
+import uuid from 'uuid-random';
 
 export interface Station {
     id: number;
@@ -34,7 +35,7 @@ export const getStationList = async (): Promise<Station[]> => {
     }, {
         headers: {
             Language: 'hu',
-            UserSessionId: '1',
+            UserSessionId: uuid(),
         },
     });
 

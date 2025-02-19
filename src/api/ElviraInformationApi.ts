@@ -1,5 +1,6 @@
 import MavConfig from '../config/mav.js';
 import fetch from '../utils/fetch.js';
+import uuid from 'uuid-random';
 
 /**
  * @link https://github.com/berenteb/mav-api-ts/blob/main/src/types/stationInfo.type.ts
@@ -95,7 +96,7 @@ export const getTimetable = async (
     }, {
         headers: {
             Language: 'hu',
-            UserSessionId: '1',
+            UserSessionId: uuid(),
         },
     });
 
