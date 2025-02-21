@@ -1,0 +1,37 @@
+{
+  "name": "mav-telegram-bot",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Telegram bot for MÁV train delay notifications",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pistvan/mav-telegram-bot.git"
+  },
+  "keywords": [
+    "telegram",
+    "mav",
+    "bot",
+    "api",
+    "train"
+  ],
+  "author": "Istvan Palinkas",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pistvan/mav-telegram-bot/issues"
+  },
+  "homepage": "https://github.com/pistvan/mav-telegram-bot#readme",
+  "devDependencies": {
+    "@tsconfig/node22": "^22.0.0",
+    "@types/node": "^22.13.1",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "sqlite3": "^5.1.7",
+    "telegraf": "^4.16.3",
+    "typeorm": "^0.3.20"
+  }
+}
