@@ -1,6 +1,5 @@
 {
   "name": "mav-telegram-bot",
-  "type": "module",
   "version": "1.0.0",
   "description": "Telegram bot for MÁV train delay notifications",
   "main": "index.js",
@@ -31,6 +30,8 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
+    "@type-cacheable/core": "^14.1.0",
+    "@type-cacheable/node-cache-adapter": "^14.1.0",
     "haversine-distance": "^1.2.3",
     "luxon": "^3.5.0",
     "sqlite3": "^5.1.7",

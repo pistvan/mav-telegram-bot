@@ -1,3 +1,4 @@
+import { Cacheable } from '@type-cacheable/core';
 import * as Api from '../../api/VonatinfoApi.js';
 
 export interface RealtimeTrain {
@@ -12,7 +13,7 @@ export interface RealtimeTrain {
     elviraId: string,
 }
 
-export default new class {
+class VonatinfoRepository {
     /**
      * Convert a train object from the API to a RealtimeTrain object.
      */
@@ -43,9 +44,12 @@ export default new class {
         };
     }
 
+    @Cacheable({ ttlSeconds: 20 })
     public async getRealtimeTrains(): Promise<RealtimeTrain[]> {
         const apiResponse = await Api.getData();
 
         return apiResponse.d.result.Trains.Train.map(this.mapApiTrainToRealtimeTrain);
     }
 }
+
+export default new VonatinfoRepository();

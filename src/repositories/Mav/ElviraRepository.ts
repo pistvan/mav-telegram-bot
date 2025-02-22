@@ -1,3 +1,4 @@
+import { Cacheable } from '@type-cacheable/core';
 import { DateTime } from 'luxon';
 import * as InformationApi from '../../api/ElviraInformationApi.js';
 import * as OfferRequestApi from '../../api/ElviraOfferRequestApi.js';
@@ -37,7 +38,7 @@ interface Station {
     name: string;
 }
 
-export default new class {
+class ElviraRepository {
     /**
      * Converts an API station scheduler to a scheduled train.
      */
@@ -94,6 +95,7 @@ export default new class {
     /**
      * Iterate the timetable of a station starting from the given date, until the end of the day.
      */
+    @Cacheable({ ttlSeconds: 7200 })
     protected async getStationTimetableForOneDay(
         stationCode: string,
         date: Date,
@@ -141,6 +143,7 @@ export default new class {
     /**
      * Get the timetable of a station for the next `hours` hour period.
      */
+    @Cacheable({ ttlSeconds: 30 })
     public async getStationTimetable(
         stationCode: string,
         hours: number = 24,
@@ -162,6 +165,7 @@ export default new class {
         return result;
     }
 
+    @Cacheable({ ttlSeconds: 7200 })
     public async getStationList(): Promise<Station[]> {
         const apiResponse = await OfferRequestApi.getStationList();
 
@@ -177,3 +181,5 @@ export default new class {
         }));
     }
 }
+
+export default new ElviraRepository();

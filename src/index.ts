@@ -6,8 +6,11 @@ import TrainComand from './middlewares/TrainCommand.js';
 import StartCommand from "./middlewares/StartCommand.js";
 import HelpCommand from "./middlewares/HelpCommand.js";
 import { Update } from "telegraf/types";
+import CacheManager from '@type-cacheable/core';
+import NodeCache from 'node-cache';
+import { useAdapter } from '@type-cacheable/node-cache-adapter';
 
-await DataSource.initialize();
+CacheManager.setClient(useAdapter(new NodeCache()));
 
 const bot = new Telegraf(telegramConfig.botToken);
 
@@ -40,9 +43,11 @@ bot.on('message', async (context) => {
     await context.reply('Hello World!');
 });
 
-bot.launch();
-
-console.log('Listening...');
+DataSource.initialize()
+    .then(() => {
+        bot.launch();
+        console.log('Listening...');
+    });
 
 // Enable graceful stop
 // TODO: test
