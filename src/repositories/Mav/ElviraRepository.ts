@@ -56,6 +56,10 @@ const mapApiStationSchedulerToScheduledTrain = (s: InformationApi.StationSchedul
     }
 }
 
+export const isDepartingScheduledTrain = (train: ScheduledTrain): train is ScheduledTrain & DepartingScheduledTrain => {
+    return train.start !== null;
+}
+
 /**
  * Get the timetable of a station.
  */

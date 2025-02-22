@@ -4,7 +4,7 @@ import fetch from '../utils/fetch.js';
 /**
  * @link https://github.com/berenteb/mav-api-ts/blob/main/src/types/stationInfo.type.ts
  */
-export interface StationTimetable {
+interface StationTimetable {
     arrivalScheduler: StationScheduler[],
     departureScheduler: StationScheduler[],
 }
@@ -12,7 +12,7 @@ export interface StationTimetable {
 /**
  * Represents a schedule, where the train is departing from the station.
  */
-export interface DepartingStationScheduler {
+interface DepartingStationScheduler {
     /**
      * @format date-time
      */
@@ -26,7 +26,7 @@ export interface DepartingStationScheduler {
 /**
  * Represents a schedule, where the train is arriving to the station.
  */
-export interface ArrivingStationScheduler {
+interface ArrivingStationScheduler {
     /**
      * @format date-time
      */
@@ -59,7 +59,7 @@ export type StationScheduler = {
     endTrack: string | null,
 } & (DepartingStationScheduler | ArrivingStationScheduler);
 
-interface Station {
+export interface Station {
     id: number,
     name: string,
     code: string,
@@ -74,12 +74,23 @@ export const isDepartingStationScheduler = (
     return stationScheduler.start !== null;
 }
 
-export const getTimetable = async (stationCode: string): Promise<StationTimetable> => {
+/**
+ * Get the scheduler list of the given station.
+ *
+ * The result contains the arriving and departing trains, starting from the given date, until the end of the day.
+ *
+ * @param stationCode The code of the station.
+ * @param date The date of the timetable. If not provided, the current date will be used.
+ */
+export const getTimetable = async (
+    stationCode: string,
+    date?: Date,
+): Promise<StationTimetable> => {
     const response = await fetch<{stationSchedulerDetails: StationTimetable}>(`${MavConfig.elviraBaseUri}/InformationApi/GetTimetable`, {
         type: 'StationInfo',
         minCount: '0',
         maxCount: '9999999',
-        travelDate: (new Date()).toISOString(),
+        travelDate: (date ?? new Date()).toISOString(),
         stationNumberCode: stationCode,
     }, {
         headers: {

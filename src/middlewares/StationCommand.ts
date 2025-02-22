@@ -1,19 +1,37 @@
 import { Composer } from "telegraf"
-import { getStationList, getStationTimetable } from "../repositories/Mav/ElviraRepository.js";
+import { getStationList, getStationTimetable, isDepartingScheduledTrain, ScheduledTrain } from "../repositories/Mav/ElviraRepository.js";
 import { CommandInterface, MiddlewareInterface } from "./MiddlewareInterface.js";
+import formatToTime from "../utils/formatToTime.js";
 
-const command: CommandInterface['command'] = ['station', 'allomas'];
+const command: CommandInterface['command'] = ['allomas', 'station'];
 
-// TODO: move
-const formatDate = (date: Date) => {
-    return date.toLocaleTimeString('hu-HU', {
-        hour: '2-digit',
-        minute: '2-digit',
-    });
+const formatTrain = (train: ScheduledTrain): string => {
+    let result = '🚂 ';
+
+    if (isDepartingScheduledTrain(train)) {
+        result += `${formatToTime(train.start)} ${train.endStation.name} felé`;
+
+        if (train.arrive) {
+            result += `, ${train.startStation.name} felől`;
+        }
+    } else {
+        result += `${formatToTime(train.arrive)} ${train.startStation.name} felől`;
+    }
+
+    if (train.currendDelay > 0) {
+        result += ` (${train.currendDelay} perc késés ⚠️)`;
+    }
+
+    return result;
 }
 
 const middleware = Composer.command(command, async (context) => {
     const payload = context.payload;
+
+    if (payload === '') {
+        await context.reply('Add meg az állomás nevét, például: /allomas Pécs');
+        return;
+    }
 
     const stations = await getStationList();
     const station = stations.find(station => station.name.toLowerCase() === payload.toLowerCase());
@@ -25,30 +43,13 @@ const middleware = Composer.command(command, async (context) => {
 
     const timetable = await getStationTimetable(station.code);
 
-    const trains = timetable.map((train): string => {
-        let result = '';
-
-        if (train.arrive) {
-            result += `Érkezik innen: ${train.startStation.name} @ ${formatDate(train.arrive)}`;
-        }
-
-        if (train.start) {
-            result += train.arrive ? ', és indul tovább ide: ' : 'Indul ide: ';
-            result += `${train.endStation.name} @ ${formatDate(train.start)}`;
-        }
-
-        result += train.currendDelay > 0
-            ? `, jelenleg ${train.currendDelay} perc késéssel közlekedik.`
-            : '.';
-
-        return result;
-    });
+    const trains = timetable.map(formatTrain);
 
     await context.reply(trains.join(`\n`));
 });
 
 export default {
     command,
-    description: 'Információ egy adott állomásról',
+    description: 'Állomási menetrend',
     middleware,
 } satisfies MiddlewareInterface;
