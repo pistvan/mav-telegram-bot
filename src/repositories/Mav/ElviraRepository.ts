@@ -21,19 +21,26 @@ interface ArrivingTrain {
     arrive: Date,
 }
 
-export type Train = {
+type BaseTrain = {
     actualOrEstimatedStart: Date | null,
     actualOrEstimatedArrive: Date | null,
-    currendDelay: number,
     track: string | null,
+} & (
+    | DepartingTrain
+    | ArrivingTrain
+);
+
+export type Train = BaseTrain & {
+    currendDelay: number,
     vehicleId: number,
 } & Pick<
     ApiTypes.Train,
     'code' | 'startStation' | 'endStation'
-> & (
-    | DepartingTrain
-    | ArrivingTrain
-);
+>
+
+export type TrainStop = BaseTrain & {
+    station: Station,
+};
 
 export type Station = Pick<ApiTypes.Station, 'code' | 'name'>;
 
@@ -74,6 +81,16 @@ class ElviraRepository {
         }
     }
 
+    protected mapApiTrainSchedule(train: ApiTypes.TrainStop): TrainStop {
+        return {
+            ...this.getTrainTiming(train),
+            actualOrEstimatedStart: train.actualOrEstimatedStart ? new Date(train.actualOrEstimatedStart) : null,
+            actualOrEstimatedArrive: train.actualOrEstimatedArrive ? new Date(train.actualOrEstimatedArrive) : null,
+            track: train.startTrack ?? train.endTrack,
+            station: this.mapApiStation(train.station),
+        }
+    }
+
     public isDepartingTrain(train: Train): train is Train & DepartingTrain {
         return train.start !== null;
     }
@@ -109,7 +126,11 @@ class ElviraRepository {
         stationCode: string,
         date: Date,
     ): Promise<Train[]> {
-        const apiResponse = await InformationApi.getTimetable(stationCode, date);
+        const apiResponse = await InformationApi.getTimetable({
+            type: 'StationInfo',
+            stationNumberCode: stationCode,
+            travelDate: date,
+        });
 
         // Sort the station schedulers by time.
         const stationSchedulers = [
@@ -185,6 +206,16 @@ class ElviraRepository {
             .filter((s) => (s.modalities ?? []).some((m) => m.code === trainModality));
 
         return apiStations.map(this.mapApiStation);
+    }
+
+    public async getTrainStops(vehicleId: number): Promise<TrainStop[]> {
+        const apiResponse = await InformationApi.getTimetable({
+            type: 'TrainInfo',
+            trainId: vehicleId,
+            travelDate: new Date(),
+        });
+
+        return apiResponse[0].scheduler.map(this.mapApiTrainSchedule);
     }
 }
 

@@ -83,6 +83,13 @@ export type Train = BaseTrain & {
     viszonylatiJel: never,
 }
 
+export type TrainStop = BaseTrain & {
+    station: Station,
+    stopKind: never,
+    stopService: never,
+    transferSign: never,
+}
+
 /**
  * Represents a schedule, where the train is departing from the station.
  */
