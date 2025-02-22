@@ -1,6 +1,3 @@
-export default (date: Date) => {
-    return date.toLocaleTimeString('hu-HU', {
-        hour: '2-digit',
-        minute: '2-digit',
-    });
-}
+import { DateTime } from "luxon";
+
+export default (date: Date) => DateTime.fromJSDate(date).toLocaleString(DateTime.TIME_24_SIMPLE);

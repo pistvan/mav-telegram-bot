@@ -1,5 +1,7 @@
+import { DateTime } from 'luxon';
 import * as InformationApi from '../../api/ElviraInformationApi.js';
 import * as OfferRequestApi from '../../api/ElviraOfferRequestApi.js';
+import MavConfig from '../../config/mav.js';
 
 /**
  * Represents a scheduled train, which is departing from the station.
@@ -30,91 +32,148 @@ export type ScheduledTrain = {
     | ArrivingScheduledTrain
 );
 
-/**
- * Converts an API station scheduler to a scheduled train.
- */
-const mapApiStationSchedulerToScheduledTrain = (s: InformationApi.StationScheduler): ScheduledTrain => {
-    const timing = InformationApi.isDepartingStationScheduler(s)
-        ? <DepartingScheduledTrain>{
-            start: new Date(s.start),
-            arrive: s.arrive ? new Date(s.arrive) : null,
-        }
-        : <ArrivingScheduledTrain>{
-            start: s.start ? new Date(s.start) : null,
-            arrive: new Date(s.arrive),
-        };
-
-    return {
-        ...timing,
-        code: s.code,
-        startStation: s.startStation,
-        endStation: s.endStation,
-        actualOrEstimatedStart: s.actualOrEstimatedStart ? new Date(s.actualOrEstimatedStart) : null,
-        actualOrEstimatedArrive: s.actualOrEstimatedArrive ? new Date(s.actualOrEstimatedArrive) : null,
-        currendDelay: s.havarianInfok.aktualisKeses,
-        track: s.startTrack ?? s.endTrack,
-    }
-}
-
-export const isDepartingScheduledTrain = (train: ScheduledTrain): train is ScheduledTrain & DepartingScheduledTrain => {
-    return train.start !== null;
-}
-
-/**
- * Get the timetable of a station.
- */
-export const getStationTimetable = async (stationCode: string): Promise<ScheduledTrain[]> => {
-    const apiResponse = await InformationApi.getTimetable(stationCode);
-
-    // Remove duplicates (same train can be in both arrival and departure).
-    const stationSchedulers: InformationApi.StationScheduler[] = [];
-    const processedCodes = new Set<string>();
-    for (const trainScheduler of [...apiResponse.arrivalScheduler, ...apiResponse.departureScheduler]) {
-        if (processedCodes.has(trainScheduler.code)) {
-            continue;
-        }
-
-        stationSchedulers.push(trainScheduler);
-        processedCodes.add(trainScheduler.code);
-    }
-
-    stationSchedulers.sort((a, b) => {
-        // FIXME: what if separate trains arrive and depart at the same time?
-        const aTime = new Date(InformationApi.isDepartingStationScheduler(a) ? a.start : a.arrive);
-        const bTime = new Date(InformationApi.isDepartingStationScheduler(b) ? b.start : b.arrive);
-
-        return aTime.getTime() - bTime.getTime();
-    });
-
-    return stationSchedulers.map(mapApiStationSchedulerToScheduledTrain);
-}
-
 interface Station {
     code: string;
     name: string;
 }
 
-export const getStationList = async (): Promise<Station[]> => {
-    const apiResponse = await OfferRequestApi.getStationList();
+export default new class {
+    /**
+     * Converts an API station scheduler to a scheduled train.
+     */
+    protected mapApiStationSchedulerToScheduledTrain(s: InformationApi.StationScheduler): ScheduledTrain {
+        const timing = InformationApi.isDepartingStationScheduler(s)
+            ? <DepartingScheduledTrain>{
+                start: new Date(s.start),
+                arrive: s.arrive ? new Date(s.arrive) : null,
+            }
+            : <ArrivingScheduledTrain>{
+                start: s.start ? new Date(s.start) : null,
+                arrive: new Date(s.arrive),
+            };
 
-    const trainModality = OfferRequestApi.StationModalities['train'];
-
-    const apiStations = apiResponse.filter((s) => {
-        if (s.isAlias) {
-            return false;
-        }
-
-        if (!s.modalities) {
-            return false;
-        }
-
-        return s.modalities.some((m) => m.code === trainModality);
-    });
-
-    return apiStations.map((s): Station => {
         return {
+            ...timing,
+            code: s.code,
+            startStation: s.startStation,
+            endStation: s.endStation,
+            actualOrEstimatedStart: s.actualOrEstimatedStart ? new Date(s.actualOrEstimatedStart) : null,
+            actualOrEstimatedArrive: s.actualOrEstimatedArrive ? new Date(s.actualOrEstimatedArrive) : null,
+            currendDelay: s.havarianInfok.aktualisKeses,
+            track: s.startTrack ?? s.endTrack,
+        }
+    }
+
+    public isDepartingScheduledTrain(train: ScheduledTrain): train is ScheduledTrain & DepartingScheduledTrain {
+        return train.start !== null;
+    }
+
+    /**
+     * Sorts the station schedulers by time.
+     *
+     * @returns A negative number if `a` should be before `b`, a positive number if `b` should be before `a`, and 0 if they are equal.
+     */
+    protected sortStationSchedulers(
+        a: InformationApi.StationScheduler,
+        b: InformationApi.StationScheduler,
+    ): number {
+        const aIsDeparting = InformationApi.isDepartingStationScheduler(a);
+        const bIsDeparting = InformationApi.isDepartingStationScheduler(b);
+        const aTime = new Date(aIsDeparting ? a.start : a.arrive).getTime();
+        const bTime = new Date(bIsDeparting ? b.start : b.arrive).getTime();
+
+        // Sort by time first.
+        if (aTime != bTime) {
+            return aTime - bTime;
+        }
+
+        // If the times are the same, the arriving train should be first.
+        return (aIsDeparting ? 0 : 1) - (bIsDeparting ? 0 : 1);
+    }
+
+    /**
+     * Iterate the timetable of a station starting from the given date, until the end of the day.
+     */
+    protected async getStationTimetableForOneDay(
+        stationCode: string,
+        date: Date,
+    ): Promise<ScheduledTrain[]> {
+        const apiResponse = await InformationApi.getTimetable(stationCode, date);
+
+        // Sort the station schedulers by time.
+        const stationSchedulers = [
+            ...apiResponse.arrivalScheduler,
+            ...apiResponse.departureScheduler,
+        ];
+        stationSchedulers.sort(this.sortStationSchedulers);
+
+        const result: ScheduledTrain[] = [];
+        const processedCodes = new Set<string>();
+        for (const trainScheduler of stationSchedulers) {
+            // Remove duplicates (same train can be in both arrival and departure scheduler).
+            if (processedCodes.has(trainScheduler.code)) {
+                continue;
+            }
+
+            processedCodes.add(trainScheduler.code);
+            result.push(this.mapApiStationSchedulerToScheduledTrain(trainScheduler));
+        }
+
+        return result;
+    }
+
+    /**
+     * Iterate the timetable of a station endlessly, starting from the given date.
+     */
+    protected async* iterateStationTimetableFrom(
+        stationCode: string,
+        datetime?: DateTime,
+    ): AsyncGenerator<ScheduledTrain> {
+        datetime ??= DateTime.now();
+        datetime.setZone(MavConfig.timezone);
+
+        do {
+            yield* await this.getStationTimetableForOneDay(stationCode, datetime.toJSDate());
+            datetime = datetime.plus({ days: 1 }).startOf('day');
+        } while (true);
+    }
+
+    /**
+     * Get the timetable of a station for the next `hours` hour period.
+     */
+    public async getStationTimetable(
+        stationCode: string,
+        hours: number = 24,
+    ): Promise<ScheduledTrain[]> {
+        const startAt = DateTime.now().setZone(MavConfig.timezone);
+        const scheduledTrainIterator = this.iterateStationTimetableFrom(stationCode, startAt);
+        const stopTime = startAt.plus({ hours });
+
+        const result: ScheduledTrain[] = [];
+        for await (const train of scheduledTrainIterator) {
+            const time = this.isDepartingScheduledTrain(train) ? train.start : train.arrive;
+            if (time > stopTime.toJSDate()) {
+                break;
+            }
+
+            result.push(train);
+        }
+
+        return result;
+    }
+
+    public async getStationList(): Promise<Station[]> {
+        const apiResponse = await OfferRequestApi.getStationList();
+
+        const trainModality = OfferRequestApi.StationModalities['train'];
+
+        // Filter out aliases and non-train stations.
+        const apiStations = apiResponse.filter((s) => !s.isAlias)
+            .filter((s) => (s.modalities ?? []).some((m) => m.code === trainModality));
+
+        return apiStations.map((s): Station => ({
             code: s.code,
             name: s.name,
-        };
-    });
+        }));
+    }
 }

@@ -1,5 +1,5 @@
 import { Composer } from "telegraf"
-import { getStationList, getStationTimetable, isDepartingScheduledTrain, ScheduledTrain } from "../repositories/Mav/ElviraRepository.js";
+import ElviraRepository,{ ScheduledTrain } from "../repositories/Mav/ElviraRepository.js";
 import { CommandInterface, MiddlewareInterface } from "./MiddlewareInterface.js";
 import formatToTime from "../utils/formatToTime.js";
 
@@ -8,7 +8,7 @@ const command: CommandInterface['command'] = ['allomas', 'station'];
 const formatTrain = (train: ScheduledTrain): string => {
     let result = '🚂 ';
 
-    if (isDepartingScheduledTrain(train)) {
+    if (ElviraRepository.isDepartingScheduledTrain(train)) {
         result += `${formatToTime(train.start)} ${train.endStation.name} felé`;
 
         if (train.arrive) {
@@ -33,7 +33,7 @@ const middleware = Composer.command(command, async (context) => {
         return;
     }
 
-    const stations = await getStationList();
+    const stations = await ElviraRepository.getStationList();
     const station = stations.find(station => station.name.toLowerCase() === payload.toLowerCase());
 
     if (!station) {
@@ -41,7 +41,7 @@ const middleware = Composer.command(command, async (context) => {
         return;
     }
 
-    const timetable = await getStationTimetable(station.code);
+    const timetable = await ElviraRepository.getStationTimetable(station.code);
 
     const trains = timetable.map(formatTrain);
 
