@@ -1,24 +1,7 @@
 import MavConfig from '../config/mav.js';
 import fetch from '../utils/fetch.js';
 import uuid from 'uuid-random';
-
-export interface Station {
-    id: number;
-    isAlias: boolean;
-    name: string;
-    code: string;
-    baseCode: string;
-    isInternational: boolean;
-    canUseForOfferRequest: boolean;
-    country: string;
-    countryIso: string;
-    /**
-     * @internal "Usually" exactly one element, but not always present because of some data inconsistency.
-     */
-    modalities?: {
-        code: number,
-    }[],
-}
+import { Station } from './ElviraTypes.js';
 
 export const StationModalities = {
     train:    100,

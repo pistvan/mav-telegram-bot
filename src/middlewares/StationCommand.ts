@@ -1,5 +1,5 @@
 import { Composer } from "telegraf"
-import ElviraRepository,{ ScheduledTrain } from "../repositories/Mav/ElviraRepository.js";
+import ElviraRepository,{ Train } from "../repositories/Mav/ElviraRepository.js";
 import { CommandInterface, MiddlewareInterface } from "./MiddlewareInterface.js";
 import formatToTime from "../utils/formatToTime.js";
 
@@ -15,10 +15,10 @@ const MAX_HOURS = 6;
 
 const command: CommandInterface['command'] = ['allomas', 'station'];
 
-const formatTrain = (train: ScheduledTrain): string => {
+const formatTrain = (train: Train): string => {
     let result = '🚂 ';
 
-    if (ElviraRepository.isDepartingScheduledTrain(train)) {
+    if (ElviraRepository.isDepartingTrain(train)) {
         result += `${formatToTime(train.start)} ${train.endStation.name} felé`;
 
         if (train.arrive) {

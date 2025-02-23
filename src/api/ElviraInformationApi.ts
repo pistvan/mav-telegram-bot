@@ -1,77 +1,22 @@
 import MavConfig from '../config/mav.js';
 import fetch from '../utils/fetch.js';
 import uuid from 'uuid-random';
+import { ArrivingTrain, DepartingTrain, Train } from './ElviraTypes.js';
 
 /**
  * @link https://github.com/berenteb/mav-api-ts/blob/main/src/types/stationInfo.type.ts
  */
 interface StationTimetable {
-    arrivalScheduler: StationScheduler[],
-    departureScheduler: StationScheduler[],
-}
-
-/**
- * Represents a schedule, where the train is departing from the station.
- */
-interface DepartingStationScheduler {
-    /**
-     * @format date-time
-     */
-    start: string,
-    /**
-     * @format date-time
-     */
-    arrive: string | null,
-}
-
-/**
- * Represents a schedule, where the train is arriving to the station.
- */
-interface ArrivingStationScheduler {
-    /**
-     * @format date-time
-     */
-    start: string | null,
-    /**
-     * @format date-time
-     */
-    arrive: string,
-}
-
-export type StationScheduler = {
-    /**
-     * The identifier of the train.
-     */
-    code: string,
-    startStation: Station,
-    endStation: Station,
-    /**
-     * @format date-time
-     */
-    actualOrEstimatedStart: string | null,
-    /**
-     * @format date-time
-     */
-    actualOrEstimatedArrive: string | null,
-    havarianInfok: {
-        aktualisKeses: number,
-    }
-    startTrack: string | null,
-    endTrack: string | null,
-} & (DepartingStationScheduler | ArrivingStationScheduler);
-
-export interface Station {
-    id: number,
-    name: string,
-    code: string,
+    arrivalScheduler: Train[],
+    departureScheduler: Train[],
 }
 
 /**
  * Returns true if the given station scheduler is an arriving station scheduler.
  */
-export const isDepartingStationScheduler = (
-    stationScheduler: DepartingStationScheduler | ArrivingStationScheduler,
-): stationScheduler is DepartingStationScheduler => {
+export const isDepartingTrain = (
+    stationScheduler: DepartingTrain | ArrivingTrain,
+): stationScheduler is DepartingTrain => {
     return stationScheduler.start !== null;
 }
 
