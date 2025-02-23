@@ -1,6 +1,6 @@
 import { Composer } from "telegraf"
-import VonatinfoRepository from "../repositories/Mav/VonatinfoRepository.js";
-import { CommandInterface, MiddlewareInterface } from "./MiddlewareInterface.js";
+import { VonatinfoRepository } from "../services/Mav";
+import { CommandInterface, MiddlewareInterface } from "./MiddlewareInterface";
 
 const command: CommandInterface['command'] = ['vonat', 'train'];
 

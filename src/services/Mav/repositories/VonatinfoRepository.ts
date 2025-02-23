@@ -1,5 +1,5 @@
 import { Cacheable } from '@type-cacheable/core';
-import * as Api from '../../api/VonatinfoApi.js';
+import * as Api from '../api/VonatinfoApi';
 
 export interface RealtimeTrain {
     code: string,

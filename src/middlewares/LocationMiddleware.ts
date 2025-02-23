@@ -1,8 +1,7 @@
 import { Composer } from "telegraf";
-import { MiddlewareInterface } from "./MiddlewareInterface.js";
-import VonatinfoRepository, { RealtimeTrain } from "../repositories/Mav/VonatinfoRepository.js";
+import { MiddlewareInterface } from "./MiddlewareInterface";
+import { OperatorPrefixes, RealtimeTrain, VonatinfoRepository } from "../services/Mav";
 import haversineDistance from "haversine-distance";
-import { OperatorPrefixes } from "../api/VonatinfoApi.js";
 
 /**
  * Maximum number of trains to display.

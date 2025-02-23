@@ -1,5 +1,5 @@
-import MavConfig from '../config/mav.js';
-import fetch from '../utils/fetch.js';
+import * as MavConfig from '../config';
+import fetch from '../../../utils/fetch';
 
 export interface GetDataResponse {
     d: {
@@ -29,7 +29,7 @@ export const OperatorPrefixes = {
 } as const;
 
 export const getData = async (): Promise<GetDataResponse> => {
-    return await fetch(`${MavConfig.vonatinfoBaseUri}/getData`, {
+    return await fetch(`${MavConfig.VonatinfoBaseUri}/getData`, {
         a: 'TRAINS',
         jo: {
             history: false,

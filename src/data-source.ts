@@ -1,6 +1,6 @@
 import { DataSource } from "typeorm";
-import { ChatEntity } from "./entities/Chat.js";
-import { MessageEntity } from "./entities/Message.js";
+import { ChatEntity } from "./entities/Chat";
+import { MessageEntity } from "./entities/Message";
 
 export default new DataSource({
     type: 'sqlite',

@@ -1,9 +1,9 @@
 import { Cacheable } from '@type-cacheable/core';
 import { DateTime } from 'luxon';
-import * as InformationApi from '../../api/ElviraInformationApi.js';
-import * as OfferRequestApi from '../../api/ElviraOfferRequestApi.js';
-import MavConfig from '../../config/mav.js';
-import * as ApiTypes from '../../api/ElviraTypes.js';
+import * as InformationApi from '../api/ElviraInformationApi';
+import * as OfferRequestApi from '../api/ElviraOfferRequestApi';
+import * as MavConfig from '../config';
+import * as ApiTypes from '../api/ElviraTypes';
 
 /**
  * Represents a train, which is departing from the station.
@@ -162,7 +162,7 @@ class ElviraRepository {
         datetime?: DateTime,
     ): AsyncGenerator<Train> {
         datetime ??= DateTime.now();
-        datetime.setZone(MavConfig.timezone);
+        datetime.setZone(MavConfig.ElviraTimezone);
 
         do {
             yield* await this.getStationTimetableForOneDay(stationCode, datetime.toJSDate());
@@ -178,7 +178,7 @@ class ElviraRepository {
         stationCode: string,
         hours: number = 24,
     ): Promise<Train[]> {
-        const startAt = DateTime.now().setZone(MavConfig.timezone);
+        const startAt = DateTime.now().setZone(MavConfig.ElviraTimezone);
         const scheduledTrainIterator = this.iterateStationTimetableFrom(stationCode, startAt);
         const stopTime = startAt.plus({ hours });
 

@@ -1,5 +1,5 @@
 import { EntitySchema } from "typeorm";
-import { ChatEntity } from "./Chat.js";
+import { ChatEntity } from "./Chat";
 
 export interface Message {
     id: number;

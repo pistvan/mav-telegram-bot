@@ -1,5 +1,5 @@
 import { Composer } from "telegraf";
-import { MiddlewareInterface } from "./MiddlewareInterface.js";
+import { MiddlewareInterface } from "./MiddlewareInterface";
 
 const middleware = Composer.command('start', async (context) => {
     await context.reply('Szia! Én a MÁV bot vagyok, és szólni tudok neked, ha egy vonat késik.');

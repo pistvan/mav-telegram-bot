@@ -1,5 +1,5 @@
-import dataSource from "../../data-source.js";
-import { Chat, ChatEntity } from "../../entities/Chat.js";
+import dataSource from "../../data-source";
+import { Chat, ChatEntity } from "../../entities/Chat";
 
 const repository = dataSource.getRepository<Chat>(ChatEntity);
 

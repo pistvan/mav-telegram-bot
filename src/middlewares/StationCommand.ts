@@ -1,7 +1,7 @@
 import { Composer } from "telegraf"
-import ElviraRepository,{ Train } from "../repositories/Mav/ElviraRepository.js";
-import { CommandInterface, MiddlewareInterface } from "./MiddlewareInterface.js";
-import formatToTime from "../utils/formatToTime.js";
+import { ElviraRepository, Train } from "../services/Mav";
+import { CommandInterface, MiddlewareInterface } from "./MiddlewareInterface";
+import formatToTime from "../utils/formatToTime";
 
 /**
  * Maximum number of trains to display.

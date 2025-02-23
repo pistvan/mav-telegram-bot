@@ -1,7 +1,7 @@
-import MavConfig from '../config/mav.js';
-import fetch from '../utils/fetch.js';
+import * as MavConfig from '../config';
+import fetch from '../../../utils/fetch';
 import uuid from 'uuid-random';
-import { ArrivingTrain, DepartingTrain, Train, TrainStop } from './ElviraTypes.js';
+import { ArrivingTrain, DepartingTrain, Train, TrainStop } from './ElviraTypes';
 
 /**
  * Returns true if the given station scheduler is an arriving station scheduler.
@@ -57,7 +57,7 @@ const ResponseKeyMapping = {
 export const getTimetable = async <T extends GetTimetableRequest['type']>(
     request: GetTimetableRequest & { type: T },
 ): Promise<GetTimetableResponse[typeof ResponseKeyMapping[T]]> => {
-    const response = await fetch<GetTimetableResponse>(`${MavConfig.elviraBaseUri}/InformationApi/GetTimetable`, {
+    const response = await fetch<GetTimetableResponse>(`${MavConfig.ElviraBaseUri}/InformationApi/GetTimetable`, {
         minCount: '0',
         maxCount: '9999999',
         ...request,
