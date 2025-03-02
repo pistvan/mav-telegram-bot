@@ -46,8 +46,6 @@ const middlewares = [
     StationCommand,
     TrainComand,
     LocationMiddleware,
-    // @ts-expect-error, FIXME: bad generic parameter
-    { middleware: Composer.command(['notify'], async (context) => context.scene.enter('CREATE_NOTIFICATION_ENTRYPOINT')) }
 ] as const;
 
 // Register all the middlewares.

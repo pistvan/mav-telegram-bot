@@ -1,16 +1,7 @@
 import * as MavConfig from '../config';
 import fetch from '../../../utils/fetch';
 import uuid from 'uuid-random';
-import { ArrivingTrain, DepartingTrain, Train, TrainStop } from './ElviraTypes';
-
-/**
- * Returns true if the given station scheduler is an arriving station scheduler.
- */
-export const isDepartingTrain = (
-    stationScheduler: DepartingTrain | ArrivingTrain,
-): stationScheduler is DepartingTrain => {
-    return stationScheduler.start !== null;
-}
+import { Train, TrainStop } from './ElviraTypes';
 
 type GetTimetableRequest = {
     travelDate?: Date,

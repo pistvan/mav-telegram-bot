@@ -91,9 +91,7 @@ scene.enter(async (context) => {
 
     // Find the first train after the current time.
     const now = new Date();
-    context.scene.session.paginateIndex = stationTimetable.findIndex(
-        (train) => ElviraRepository.isDepartingTrain(train) ? train.start > now : train.arrive > now,
-    );
+    context.scene.session.paginateIndex = stationTimetable.findIndex((train) => train.getTime() > now);
 
     await sendOrEditMessage(context);
 });
@@ -122,29 +120,11 @@ scene.action(new RegExp(`^${Action.SelectTrain}:(?<id>\\d+)$`), buildChatActionM
 
     const trainStops = await ElviraRepository.getTrainStops(train.vehicleId);
 
-    console.log(trainStops);
-
-    const messageLines: string[] = trainStops.map((stop) => {
-        let result = `🚉 `;
-
-        if (stop.start) {
-            result += `${formatToTime(stop.start)} ${stop.station.name}`;
-
-            if (stop.arrive) {
-                result += ` (érkezés: ${formatToTime(stop.arrive)})`;
-            }
-        } else if (stop.arrive) {
-            result += `${formatToTime(stop.arrive)} ${stop.station.name}`;
-        }
-
-        return result;
-    });
-
     await context.reply(
         [
             `Kiválasztott vonat: ${train.code}`,
             'A vonat menetrendje a következő:',
-            ...messageLines,
+            ...trainStops.map((stop) => stop.format()),
         ].join('\n'),
     );
 

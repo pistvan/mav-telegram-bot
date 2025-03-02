@@ -1,7 +1,6 @@
 import { Composer } from "telegraf"
-import { ElviraRepository, Train } from "../services/Mav";
+import { ElviraRepository } from "../services/Mav";
 import { CommandInterface, MiddlewareInterface } from "./MiddlewareInterface";
-import formatToTime from "../utils/formatToTime";
 
 /**
  * Maximum number of trains to display.
@@ -14,26 +13,6 @@ const MAX_NUMBER_OF_TRAINS = 12;
 const MAX_HOURS = 6;
 
 const command: CommandInterface['command'] = ['allomas', 'station'];
-
-const formatTrain = (train: Train): string => {
-    let result = '🚂 ';
-
-    if (ElviraRepository.isDepartingTrain(train)) {
-        result += `${formatToTime(train.start)} ${train.endStation.name} felé`;
-
-        if (train.arrive) {
-            result += `, ${train.startStation.name} felől`;
-        }
-    } else {
-        result += `${formatToTime(train.arrive)} ${train.startStation.name} felől`;
-    }
-
-    if (train.currendDelay > 0) {
-        result += ` (${train.currendDelay} perc késés ⚠️)`;
-    }
-
-    return result;
-}
 
 const middleware = Composer.command(command, async (context) => {
     const payload = context.payload;
@@ -58,7 +37,7 @@ const middleware = Composer.command(command, async (context) => {
 
     const trains = timetable
         .slice(0, MAX_NUMBER_OF_TRAINS)
-        .map(formatTrain);
+        .map((train) => train.toString());
 
     await context.reply(`Ezek a vonatok indulnak ${station.name} állomásról:\n${trains.join(`\n`)}`);
 });

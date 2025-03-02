@@ -1,4 +1,4 @@
-import { Scenes } from "telegraf";
+import { Composer, Scenes } from "telegraf";
 import { CreateNotificationStageContext } from "./types.js";
 import Scene_01_AskForStationNameScene from "./01_AskForStationNameScene.js";
 import Scene_02_AskForTrainScene from "./02_AskForTrainScene.js";
@@ -6,6 +6,7 @@ import Scene_03_AskForNotificationPeriod from "./03_AskForNotificationPeriod.js"
 import Scene_04_Notification_Once_AskForDate from "./04_Notification_Once_AskForDate.js";
 import Scene_05_Notification_Weekly_AskForDays from "./05_Notification_Weekly_AskForDays.js";
 import Scene_06_Notification_Weekly_AskForTimeScene from "./06_Notification_Weekly_AskForTimeScene.js"
+import { MiddlewareInterface } from "../../MiddlewareInterface";
 
 const stage = new Scenes.Stage<CreateNotificationStageContext>([
     Scene_01_AskForStationNameScene,
@@ -16,4 +17,13 @@ const stage = new Scenes.Stage<CreateNotificationStageContext>([
     Scene_06_Notification_Weekly_AskForTimeScene,
 ]);
 
-export default stage.middleware();
+const trigger = Composer.command<CreateNotificationStageContext>(
+    ['notify'],
+    async (context) => context.scene.enter('CREATE_NOTIFICATION_ENTRYPOINT'),
+);
+
+const c = Composer.compose([stage.middleware(), trigger]);
+
+export default {
+    middleware: c,
+} satisfies MiddlewareInterface<CreateNotificationStageContext>;

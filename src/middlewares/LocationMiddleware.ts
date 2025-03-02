@@ -18,11 +18,17 @@ const MAX_DISTANCE = 100e3;
  */
 const OPERATORS: (keyof typeof OperatorPrefixes)[] = ['GYSEV', 'MAV'];
 
-interface RealtimeTrainWithDistance extends RealtimeTrain {
+class RealtimeTrainWithDistance extends RealtimeTrain {
     /**
      * Distance from the user's location in meters.
      */
     distance: number;
+
+    constructor(train: RealtimeTrain, location: Parameters<typeof haversineDistance>[0]) {
+        super(train);
+
+        this.distance = haversineDistance(location, train.coordinates);
+    }
 }
 
 const formatTrain = (train: RealtimeTrainWithDistance): string => {
@@ -41,10 +47,7 @@ const middleware = Composer.on('location', async (context) => {
     // Filter based on the operator, then calculate the Haversine distance of each train from the user's location.
     const trains: RealtimeTrainWithDistance[] = (await VonatinfoRepository.getRealtimeTrains())
         .filter((train) => OPERATORS.includes(train.operator))
-        .map((train) => ({
-            ...train,
-            distance: haversineDistance(location, train.coordinates),
-        }))
+        .map((train) => new RealtimeTrainWithDistance(train, location))
         .filter(train => train.distance < MAX_DISTANCE);
 
     trains.sort((a, b) => a.distance - b.distance);

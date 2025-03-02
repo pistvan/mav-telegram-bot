@@ -3,121 +3,11 @@ import { DateTime } from 'luxon';
 import * as InformationApi from '../api/ElviraInformationApi';
 import * as OfferRequestApi from '../api/ElviraOfferRequestApi';
 import * as MavConfig from '../config';
-import * as ApiTypes from '../api/ElviraTypes';
-
-/**
- * Represents a train, which is departing from the station.
- */
-interface DepartingTrain {
-    start: Date,
-    arrive: Date | null,
-}
-
-/**
- * Represents a train, which is arriving to the station.
- */
-interface ArrivingTrain {
-    start: Date | null,
-    arrive: Date,
-}
-
-type BaseTrain = {
-    actualOrEstimatedStart: Date | null,
-    actualOrEstimatedArrive: Date | null,
-    track: string | null,
-} & (
-    | DepartingTrain
-    | ArrivingTrain
-);
-
-export type Train = BaseTrain & {
-    code: ApiTypes.Train['code'],
-    currendDelay: number,
-    vehicleId: number,
-    startStation: Station,
-    endStation: Station,
-}
-
-export type TrainStop = BaseTrain & {
-    station: Station,
-};
-
-export type Station = Pick<ApiTypes.Station, 'code' | 'name'>;
+import { TrainStop } from '../entities/TrainStop';
+import { Station } from '../entities/Station';
+import { Train } from '../entities/Train';
 
 class ElviraRepository {
-    protected mapApiStation(station: ApiTypes.Station): Station {
-        return {
-            code: station.code,
-            name: station.name,
-        };
-    }
-
-    protected getTrainTiming(train: ApiTypes.ArrivingTrain | ApiTypes.DepartingTrain): ArrivingTrain | DepartingTrain {
-        return InformationApi.isDepartingTrain(train)
-            ? <DepartingTrain>{
-                start: new Date(train.start),
-                arrive: train.arrive ? new Date(train.arrive) : null,
-            }
-            : <ArrivingTrain>{
-                start: train.start ? new Date(train.start) : null,
-                arrive: new Date(train.arrive),
-            };
-    }
-
-    /**
-     * Converts an API train to a scheduled train.
-     */
-    protected mapApiTrain(train: ApiTypes.Train): Train {
-        return {
-            ...this.getTrainTiming(train),
-            code: train.code,
-            startStation: this.mapApiStation(train.startStation),
-            endStation: this.mapApiStation(train.endStation),
-            actualOrEstimatedStart: train.actualOrEstimatedStart ? new Date(train.actualOrEstimatedStart) : null,
-            actualOrEstimatedArrive: train.actualOrEstimatedArrive ? new Date(train.actualOrEstimatedArrive) : null,
-            currendDelay: train.havarianInfok.aktualisKeses,
-            track: train.startTrack ?? train.endTrack,
-            vehicleId: train.jeEszkozAlapId,
-        }
-    }
-
-    protected mapApiTrainSchedule(train: ApiTypes.TrainStop): TrainStop {
-        return {
-            ...this.getTrainTiming(train),
-            actualOrEstimatedStart: train.actualOrEstimatedStart ? new Date(train.actualOrEstimatedStart) : null,
-            actualOrEstimatedArrive: train.actualOrEstimatedArrive ? new Date(train.actualOrEstimatedArrive) : null,
-            track: train.startTrack ?? train.endTrack,
-            station: this.mapApiStation(train.station),
-        }
-    }
-
-    public isDepartingTrain(train: Train): train is Train & DepartingTrain {
-        return train.start !== null;
-    }
-
-    /**
-     * Sorts the station schedulers by time.
-     *
-     * @returns A negative number if `a` should be before `b`, a positive number if `b` should be before `a`, and 0 if they are equal.
-     */
-    protected sortStationSchedulers(
-        a: ApiTypes.Train,
-        b: ApiTypes.Train,
-    ): number {
-        const aIsDeparting = InformationApi.isDepartingTrain(a);
-        const bIsDeparting = InformationApi.isDepartingTrain(b);
-        const aTime = new Date(aIsDeparting ? a.start : a.arrive).getTime();
-        const bTime = new Date(bIsDeparting ? b.start : b.arrive).getTime();
-
-        // Sort by time first.
-        if (aTime != bTime) {
-            return aTime - bTime;
-        }
-
-        // If the times are the same, the arriving train should be first.
-        return (aIsDeparting ? 0 : 1) - (bIsDeparting ? 0 : 1);
-    }
-
     /**
      * Iterate the timetable of a station starting from the given date, until the end of the day.
      */
@@ -132,23 +22,23 @@ class ElviraRepository {
             travelDate: date,
         });
 
-        // Sort the station schedulers by time.
-        const stationSchedulers = [
+        // Map the response to trains, then sort them by time.
+        const stationSchedulerTrains = [
             ...apiResponse.arrivalScheduler,
             ...apiResponse.departureScheduler,
-        ];
-        stationSchedulers.sort(this.sortStationSchedulers);
+        ].map(Train.createFromApi);
+        stationSchedulerTrains.sort(Train.sorter);
 
         const result: Train[] = [];
         const processedCodes = new Set<string>();
-        for (const train of stationSchedulers) {
+        for (const train of stationSchedulerTrains) {
             // Remove duplicates (same train can be in both arrival and departure scheduler).
             if (processedCodes.has(train.code)) {
                 continue;
             }
 
             processedCodes.add(train.code);
-            result.push(this.mapApiTrain(train));
+            result.push(train);
         }
 
         return result;
@@ -184,12 +74,11 @@ class ElviraRepository {
 
         const stationCode = typeof options.station === 'string' ? options.station : options.station.code;
         const scheduledTrainIterator = this.iterateStationTimetableFrom(stationCode, startAt);
-        const stopTime = startAt.plus({ hours: options.hours ?? 24 });
+        const stopTime = startAt.plus({ hours: options.hours ?? 24 }).toJSDate();
 
         const result: Train[] = [];
         for await (const train of scheduledTrainIterator) {
-            const time = this.isDepartingTrain(train) ? train.start : train.arrive;
-            if (time > stopTime.toJSDate()) {
+            if (train.getTime() > stopTime) {
                 break;
             }
 
@@ -209,7 +98,7 @@ class ElviraRepository {
         const apiStations = apiResponse.filter((s) => !s.isAlias)
             .filter((s) => (s.modalities ?? []).some((m) => m.code === trainModality));
 
-        return apiStations.map(this.mapApiStation);
+        return apiStations.map((station) => new Station(station));
     }
 
     public async getStationByName(name: string): Promise<Station | undefined> {
@@ -225,7 +114,7 @@ class ElviraRepository {
             travelDate: new Date(),
         });
 
-        return apiResponse[0].scheduler.map(this.mapApiTrainSchedule);
+        return apiResponse[0].scheduler.map(TrainStop.createFromApi);
     }
 }
 
