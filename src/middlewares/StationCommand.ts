@@ -51,7 +51,10 @@ const middleware = Composer.command(command, async (context) => {
         return;
     }
 
-    const timetable = await ElviraRepository.getStationTimetable(station.code, MAX_HOURS);
+    const timetable = await ElviraRepository.getStationTimetable({
+        station,
+        hours: MAX_HOURS,
+    });
 
     const trains = timetable
         .slice(0, MAX_NUMBER_OF_TRAINS)

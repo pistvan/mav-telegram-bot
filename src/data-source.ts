@@ -1,6 +1,7 @@
 import { DataSource } from "typeorm";
 import { ChatEntity } from "./entities/Chat";
 import { MessageEntity } from "./entities/Message";
+import { NotificationEntity } from "./entities/Notification";
 
 export default new DataSource({
     type: 'sqlite',
@@ -9,5 +10,6 @@ export default new DataSource({
         // TODO: use directory
         ChatEntity,
         MessageEntity,
+        NotificationEntity,
     ],
 });

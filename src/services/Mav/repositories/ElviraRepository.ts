@@ -31,12 +31,12 @@ type BaseTrain = {
 );
 
 export type Train = BaseTrain & {
+    code: ApiTypes.Train['code'],
     currendDelay: number,
     vehicleId: number,
-} & Pick<
-    ApiTypes.Train,
-    'code' | 'startStation' | 'endStation'
->
+    startStation: Station,
+    endStation: Station,
+}
 
 export type TrainStop = BaseTrain & {
     station: Station,
@@ -71,8 +71,8 @@ class ElviraRepository {
         return {
             ...this.getTrainTiming(train),
             code: train.code,
-            startStation: train.startStation,
-            endStation: train.endStation,
+            startStation: this.mapApiStation(train.startStation),
+            endStation: this.mapApiStation(train.endStation),
             actualOrEstimatedStart: train.actualOrEstimatedStart ? new Date(train.actualOrEstimatedStart) : null,
             actualOrEstimatedArrive: train.actualOrEstimatedArrive ? new Date(train.actualOrEstimatedArrive) : null,
             currendDelay: train.havarianInfok.aktualisKeses,
@@ -122,7 +122,7 @@ class ElviraRepository {
      * Iterate the timetable of a station starting from the given date, until the end of the day.
      */
     @Cacheable({ ttlSeconds: 7200 })
-    protected async getStationTimetableForOneDay(
+    public async getStationTimetableForOneDay(
         stationCode: string,
         date: Date,
     ): Promise<Train[]> {
@@ -171,16 +171,20 @@ class ElviraRepository {
     }
 
     /**
-     * Get the timetable of a station for the next `hours` hour period.
+     * Get the timetable of a station, starting from `date`, for the next `hours` hour period.
      */
     @Cacheable({ ttlSeconds: 30 })
-    public async getStationTimetable(
-        stationCode: string,
-        hours: number = 24,
-    ): Promise<Train[]> {
-        const startAt = DateTime.now().setZone(MavConfig.ElviraTimezone);
+    public async getStationTimetable(options: {
+        station: string | Station,
+        date?: Date,
+        hours?: number,
+    }): Promise<Train[]> {
+        const startAt = (options.date ? DateTime.fromJSDate(options.date) : DateTime.now())
+            .setZone(MavConfig.ElviraTimezone);
+
+        const stationCode = typeof options.station === 'string' ? options.station : options.station.code;
         const scheduledTrainIterator = this.iterateStationTimetableFrom(stationCode, startAt);
-        const stopTime = startAt.plus({ hours });
+        const stopTime = startAt.plus({ hours: options.hours ?? 24 });
 
         const result: Train[] = [];
         for await (const train of scheduledTrainIterator) {
@@ -206,6 +210,12 @@ class ElviraRepository {
             .filter((s) => (s.modalities ?? []).some((m) => m.code === trainModality));
 
         return apiStations.map(this.mapApiStation);
+    }
+
+    public async getStationByName(name: string): Promise<Station | undefined> {
+        const stationList = await this.getStationList();
+
+        return stationList.find((s) => s.name.toLowerCase() === name.toLowerCase());
     }
 
     public async getTrainStops(vehicleId: number): Promise<TrainStop[]> {
