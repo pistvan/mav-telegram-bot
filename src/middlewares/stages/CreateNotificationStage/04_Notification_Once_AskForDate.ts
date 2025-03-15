@@ -31,7 +31,7 @@ scene.on('text', async (context) => {
         train: context.session.notification.train!.code,
         schedule: {
             type: `once`,
-            date: date.toJSDate(),
+            date: date.toISO(),
         },
         chat: context.session.chatEntity,
     });

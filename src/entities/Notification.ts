@@ -1,10 +1,14 @@
-import { EntitySchema, ValueTransformer } from "typeorm";
+import { EntitySchema } from "typeorm";
 import { Chat, ChatEntity } from "./Chat";
+import typeormJsonTransformer from "../utils/typeormJsonTransformer";
 
 export namespace NotificationPeriod {
     export type Once = {
         type: 'once',
-        date: Date,
+        /**
+         * @internal Cannot use Date because it is not serializable.
+         */
+        date: string,
     };
 
     export type Weekly = {
@@ -18,16 +22,6 @@ export namespace NotificationPeriod {
 }
 
 export type NotificationSchedule = NotificationPeriod.Once | NotificationPeriod.Weekly;
-
-class ScheduleValueTransformer implements ValueTransformer {
-    to(value: any): any {
-        return JSON.stringify(value);
-    }
-
-    from(value: any): any {
-        return JSON.parse(value);
-    }
-}
 
 export interface Notification {
     id: number,
@@ -51,7 +45,7 @@ export const NotificationEntity = new EntitySchema<Notification>({
         },
         schedule: {
             type: String,
-            transformer: new ScheduleValueTransformer(),
+            transformer: typeormJsonTransformer,
         },
         createdAt: {
             type: 'datetime',
