@@ -8,7 +8,11 @@ if (botToken === undefined) {
 }
 
 const adminChatIds: number[] = (() => {
-    const splitted = process.env.TELEGRAM_ADMIN_CHAT_IDS?.split(',') ?? [];
+    const concated = process.env.TELEGRAM_ADMIN_CHAT_IDS?.trim() ?? '';
+    if (concated === '') {
+        return [];
+    }
+    const splitted = concated.split(',');
 
     const regex = /^\d+$/;
     for (const id of splitted) {
