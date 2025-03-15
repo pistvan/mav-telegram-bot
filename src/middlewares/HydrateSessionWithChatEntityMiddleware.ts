@@ -11,11 +11,11 @@ const middleware = async (context: TelegramAppContext, next: () => {}) => {
         ? context.chat.username ?? context.chat.first_name
         : context.chat.title;
 
-    context.session.chatEntity ??= await ChatRepository.findOneBy({ id: context.chat.id})
-        ?? await ChatRepository.create({
+    context.session.chatEntity ??= await ChatRepository.findOneBy({ id: context.chat.id })
+        ?? await ChatRepository.save(ChatRepository.create({
             id: context.chat.id,
             username: chatName,
-        });
+        }));
 
     return next();
 };
