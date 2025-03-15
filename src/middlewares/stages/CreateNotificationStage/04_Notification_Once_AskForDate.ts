@@ -1,7 +1,7 @@
 import { Composer, Scenes } from "telegraf";
 import { CreateNotificationStageContext, SceneId } from "./types";
 import { DateTime } from "luxon";
-import NotificationRepository from "../../../repositories/App/NotificationRepository.js";
+import NotificationService from "../../../services/NotificationService";
 
 const DATE_FORMAT = `yyyy-MM-dd HH:mm`;
 
@@ -27,7 +27,7 @@ scene.on('text', async (context) => {
         return;
     }
 
-    const notification = await NotificationRepository.save({
+    const notification = await NotificationService.create({
         train: context.session.notification.train!.code,
         schedule: {
             type: `once`,

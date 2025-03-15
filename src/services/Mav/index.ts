@@ -4,6 +4,7 @@ export {
 
 export {
     default as VonatinfoRepository,
+    VonatinfoRepositoryInterface,
 } from "./repositories/VonatinfoRepository";
 
 export {

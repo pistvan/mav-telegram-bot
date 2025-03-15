@@ -14,6 +14,7 @@ import NodeCache from 'node-cache';
 import { useAdapter } from '@type-cacheable/node-cache-adapter';
 import CreateNotificationStageMiddleware from './middlewares/stages/CreateNotificationStage';
 import { MiddlewareInterface } from "./middlewares/MiddlewareInterface";
+import NotificationService from "./services/NotificationService";
 
 CacheManager.setClient(useAdapter(new NodeCache()));
 
@@ -53,6 +54,9 @@ bot.on('message', async (context) => {
 });
 
 DataSource.initialize()
+    .then(async () => {
+        await NotificationService.start();
+    })
     .then(() => {
         bot.launch();
         console.log('Listening...');

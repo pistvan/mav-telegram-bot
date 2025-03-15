@@ -2,7 +2,7 @@ import { Scenes } from "telegraf";
 import { CreateNotificationStageContext, SceneId } from "./types";
 import { DateTime } from "luxon";
 import { NotificationPeriod } from "../../../entities/Notification";
-import NotificationRepository from "../../../repositories/App/NotificationRepository.js";
+import NotificationService from "../../../services/NotificationService";
 
 const DATE_FORMAT = `HH:mm`;
 
@@ -29,13 +29,11 @@ scene.on(`text`, async (context) => {
 
     notificationPeriod.time = context.message.text;
 
-    const notification = await NotificationRepository.save({
+    await NotificationService.create({
         train: context.session.notification.train!.code,
         schedule: notificationPeriod,
         chat: context.session.chatEntity,
     });
-
-    console.log(`The notification has been saved:`, notification);
 
     await context.scene.leave();
 });

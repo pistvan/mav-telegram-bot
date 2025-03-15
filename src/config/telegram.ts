@@ -7,6 +7,19 @@ if (botToken === undefined) {
     throw new Error('TELEGRAM_BOT_TOKEN must be provided!');
 }
 
+const adminChatIds: number[] = (() => {
+    const splitted = process.env.TELEGRAM_ADMIN_CHAT_IDS?.split(',') ?? [];
+
+    const regex = /^\d+$/;
+    for (const id of splitted) {
+        if (!regex.test(id)) {
+            throw new Error(`Invalid chat ID: ${id}`);
+        }
+    }
+
+    return splitted.map(Number);
+})();
+
 export type TelegramAppContext = Context & {
     session: {
         chatEntity: Chat,
@@ -15,4 +28,10 @@ export type TelegramAppContext = Context & {
 
 export default {
     botToken,
+    /**
+     * The chat IDs of the administrators.
+     *
+     * Can be used to report errors.
+     */
+    adminChatIds,
 };

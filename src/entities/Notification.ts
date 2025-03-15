@@ -17,6 +17,9 @@ export namespace NotificationPeriod {
          * The selected days of the week, where 0 is Sunday and 6 is Saturday.
          */
         days: number[],
+        /**
+         * @format hh:mm
+         */
         time: string,
     };
 }
@@ -62,6 +65,7 @@ export const NotificationEntity = new EntitySchema<Notification>({
             target: ChatEntity,
             onDelete: 'CASCADE',
             onUpdate: 'CASCADE',
+            eager: true,
         },
     },
 });
