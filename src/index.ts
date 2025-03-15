@@ -2,7 +2,7 @@ import DataSource from "./data-source";
 import telegramConfig, { TelegramAppContext } from "./config/telegram";
 import { Context, session, Telegraf } from "telegraf";
 import LogMiddleware from "./middlewares/LogMiddleware";
-import ChatRepository from './repositories/App/ChatRepository';
+import HydrateSessionWithChatEntityMiddleware from "./middlewares/HydrateSessionWithChatEntityMiddleware";
 import StationCommand from './middlewares/StationCommand';
 import TrainComand from './middlewares/TrainCommand';
 import StartCommand from "./middlewares/StartCommand";
@@ -22,23 +22,7 @@ const bot = new Telegraf<TelegramAppContext>(telegramConfig.botToken);
 // Here we define all the middlewares that we want to use.
 const middlewares = [
     { middleware: session({ defaultSession: () => ({}) }) },
-    { middleware: async (context: TelegramAppContext, next: () => {}) => {
-        if (context.chat === undefined) {
-            return next();
-        }
-
-        const chatName = context.chat.type === 'private'
-            ? context.chat.username ?? context.chat.first_name
-            : context.chat.title;
-
-        context.session.chatEntity ??= await ChatRepository.findOneBy({ id: context.chat.id})
-            ?? await ChatRepository.create({
-                id: context.chat.id,
-                username: chatName,
-            });
-
-        return next();
-    } },
+    HydrateSessionWithChatEntityMiddleware,
     LogMiddleware,
     CreateNotificationStageMiddleware,
     StartCommand,
