@@ -7,6 +7,17 @@ import { VonatinfoRepository, VonatinfoRepositoryInterface } from './Mav';
 import { MessageServiceInterface } from './MessageServiceInterface';
 import MessageService from './MessageService';
 import ReportError from './decorators/ReportError';
+import { Format } from 'telegraf';
+
+export const DaysOfTheWeek = [
+    `hétfő`,
+    `kedd`,
+    `szerda`,
+    `csütörtök`,
+    `péntek`,
+    `szombat`,
+    `vasárnap`,
+] as const satisfies string[];
 
 export class NotificationService {
     public constructor(
@@ -38,10 +49,17 @@ export class NotificationService {
         }
     }
 
-    public async create(entity: Partial<Notification>) {
+    /**
+     * Creates a new notification, schedules it, and sends an acknowledgment message to the chat.
+     */
+    public async create(entity: Pick<Notification, 'train' | 'schedule' | 'chat'>): Promise<Notification> {
         const notification = await this.notificationRepository.save(entity);
         console.log(`The notification has been saved:`, notification);
         this.schedule(notification);
+
+        this.messageService.sendMessage(entity.chat.id, this.formatNotificationCreated(entity));
+
+        return notification;
     }
 
     public async remove(notification: Notification) {
@@ -118,11 +136,25 @@ export class NotificationService {
         return `notification-${notification.id}`;
     }
 
-    /**
-     * Reports the administator about the error.
-     */
-    protected reportError(error: Error) {
-        console.error(error);
+    public formatNotificationCreated(notification: Pick<Notification, 'train' | 'schedule'>): Format.FmtString {
+        const lines = [
+            Format.join`✅ Értesítés létrehozva 🚂 ${Format.bold(notification.train)} számú vonathoz.`,
+        ];
+
+        if (notification.schedule.type === 'once') {
+            lines.push(
+                // TODO: format the date
+                Format.join`⏰ ${Format.bold(notification.schedule.date)}`,
+            );
+        } else if (notification.schedule.type === 'weekly') {
+            const days = notification.schedule.days.map((day) => DaysOfTheWeek[day]);
+            lines.push(
+                Format.join`📅 ${Format.bold(days.join(', '))}`,
+                Format.join`⏰ ${Format.bold(notification.schedule.time)}`,
+            );
+        }
+
+        return Format.join(lines, `\n`);
     }
 }
 

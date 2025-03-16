@@ -3,20 +3,11 @@ import { CreateNotificationStageContext, SceneId } from "./types";
 import { InlineKeyboardButton, Convenience } from "telegraf/types";
 import chunkArray from "../../../utils/chunkArray";
 import { NotificationPeriod } from "../../../entities/Notification";
+import { DaysOfTheWeek } from "../../../services/NotificationService";
 
 type SceneContext = CreateNotificationStageContext<{
     messageId?: number,
 }>;
-
-const DaysOfTheWeek = [
-    `hétfő`,
-    `kedd`,
-    `szerda`,
-    `csütörtök`,
-    `péntek`,
-    `szombat`,
-    `vasárnap`,
-] as const satisfies string[];
 
 enum Action {
     ToggleDay = 'TOGGLE_DAY',

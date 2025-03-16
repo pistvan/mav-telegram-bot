@@ -27,7 +27,7 @@ scene.on('text', async (context) => {
         return;
     }
 
-    const notification = await NotificationService.create({
+    await NotificationService.create({
         train: context.session.notification.train!.code,
         schedule: {
             type: `once`,
@@ -35,8 +35,6 @@ scene.on('text', async (context) => {
         },
         chat: context.session.chatEntity,
     });
-
-    console.log(`The notification has been saved:`, notification);
 
     await context.scene.leave();
 });
