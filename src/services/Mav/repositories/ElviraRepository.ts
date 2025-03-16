@@ -98,7 +98,7 @@ class ElviraRepository {
         const apiStations = apiResponse.filter((s) => !s.isAlias)
             .filter((s) => (s.modalities ?? []).some((m) => m.code === trainModality));
 
-        return apiStations.map((station) => new Station(station));
+        return apiStations.map(Station.createFromApi);
     }
 
     public async getStationByName(name: string): Promise<Station | undefined> {

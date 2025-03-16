@@ -39,8 +39,8 @@ export abstract class Train extends Base.BaseTrain {
         return {
             ...super.mapFromApi(train),
             code: train.code,
-            startStation: new Station(train.startStation),
-            endStation: new Station(train.endStation),
+            startStation: Station.createFromApi(train.startStation),
+            endStation: Station.createFromApi(train.endStation),
             currentDelay: train.havarianInfok.aktualisKeses,
             vehicleId: train.jeEszkozAlapId,
         }

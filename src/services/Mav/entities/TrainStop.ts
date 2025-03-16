@@ -18,7 +18,10 @@ export abstract class TrainStop extends Base.BaseTrain {
     }
 
     static createFromApi(train: ApiTypes.TrainStop) {
-        const options = TrainStop.mapFromApi(train);
+        const options = {
+            ...super.mapFromApi(train),
+            station: Station.createFromApi(train.station),
+        };
 
         if (options.start) {
             return new DepartingTrainStop(options as TrainStopInterface & Base.DepartingTrain);
@@ -27,13 +30,6 @@ export abstract class TrainStop extends Base.BaseTrain {
         } else {
             throw new Error("Either start or arrive must be defined.");
         }
-    }
-
-    static mapFromApi(train: ApiTypes.TrainStop): TrainStopInterface {
-        return {
-            ...super.mapFromApi(train),
-            station: new Station(train.station),
-        };
     }
 
     abstract format(): string;

@@ -10,7 +10,7 @@ export interface Station {
     isInternational: boolean;
     canUseForOfferRequest: boolean;
     country: string;
-    countryIso: string;
+    coutryIso: string; // Typo in the API.
     /**
      * @internal "Usually" exactly one element, but not always present because of some data inconsistency.
      */

@@ -120,6 +120,12 @@ scene.action(new RegExp(`^${Action.SelectTrain}:(?<id>\\d+)$`), buildChatActionM
 
     const trainStops = await ElviraRepository.getTrainStops(train.vehicleId);
 
+    // Check if train touches Hungary.
+    if (!trainStops.some((stop) => stop.station.countryCode === 'HU')) {
+        await context.reply('Ez a vonat nem érint Magyarországot. Kérlek, válassz egy másik vonatot.');
+        return;
+    }
+
     await context.reply(
         [
             `Kiválasztott vonat: ${train.code}`,
