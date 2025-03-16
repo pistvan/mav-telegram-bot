@@ -14,7 +14,7 @@ export class Station {
     constructor(options: StationInterface) {
         this.code = options.code;
         this.name = options.name;
-        this.countryCode = options.countryCode;
+        this.countryCode = options.countryCode.toUpperCase();
     }
 
     static createFromApi(station: ApiStationInterface) {

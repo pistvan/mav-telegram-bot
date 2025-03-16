@@ -22,8 +22,7 @@ const middleware = Composer.command(command, async (context) => {
         return;
     }
 
-    const stations = await ElviraRepository.getStationList();
-    const station = stations.find(station => station.name.toLowerCase() === payload.toLowerCase());
+    const station = await ElviraRepository.getStationByName(payload);
 
     if (!station) {
         await context.reply('Nem találom ezt az állomást.');

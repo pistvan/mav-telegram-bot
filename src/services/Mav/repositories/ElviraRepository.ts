@@ -27,6 +27,19 @@ class ElviraRepository {
             ...apiResponse.arrivalScheduler,
             ...apiResponse.departureScheduler,
         ].map(Train.createFromApi);
+
+        // The API can return with station aliases, which have to be replaced with the actual station.
+        // We do this only for Hungarian stations.
+        const stations = await this.getStationList();
+        stationSchedulerTrains.forEach((train) => {
+            if (train.startStation.countryCode === 'HU') {
+                train.startStation = stations.get(train.startStation.code) ?? train.startStation;
+            }
+            if (train.endStation.countryCode === 'HU') {
+                train.endStation = stations.get(train.endStation.code) ?? train.endStation;
+            }
+        });
+
         stationSchedulerTrains.sort(Train.sorter);
 
         const result: Train[] = [];
@@ -89,7 +102,7 @@ class ElviraRepository {
     }
 
     @Cacheable({ ttlSeconds: 7200 })
-    public async getStationList(): Promise<Station[]> {
+    public async getStationList(): Promise<Map<Station['code'], Station>> {
         const apiResponse = await OfferRequestApi.getStationList();
 
         const trainModality = OfferRequestApi.StationModalities['train'];
@@ -98,13 +111,23 @@ class ElviraRepository {
         const apiStations = apiResponse.filter((s) => !s.isAlias)
             .filter((s) => (s.modalities ?? []).some((m) => m.code === trainModality));
 
-        return apiStations.map(Station.createFromApi);
+        const stations = apiStations.map(Station.createFromApi);
+
+        return new Map(stations.map((s) => [s.code, s]));
     }
 
     public async getStationByName(name: string): Promise<Station | undefined> {
         const stationList = await this.getStationList();
 
-        return stationList.find((s) => s.name.toLowerCase() === name.toLowerCase());
+        name = name.toLowerCase();
+
+        for (const station of stationList.values()) {
+            if (station.name.toLowerCase() === name) {
+                return station;
+            }
+        }
+
+        return undefined;
     }
 
     public async getTrainStops(vehicleId: number): Promise<TrainStop[]> {
@@ -114,7 +137,16 @@ class ElviraRepository {
             travelDate: new Date(),
         });
 
-        return apiResponse[0].scheduler.map(TrainStop.createFromApi);
+        const stops = apiResponse[0].scheduler.map(TrainStop.createFromApi);
+
+        // The API can return with station aliases, which have to be replaced with the actual station.
+        // We do this only for Hungarian stations.
+        const stations = await this.getStationList();
+        stops.filter((stop) => stop.station.countryCode === 'HU').forEach((stop) => {
+            stop.station = stations.get(stop.station.code) ?? stop.station;
+        });
+
+        return stops;
     }
 }
 
