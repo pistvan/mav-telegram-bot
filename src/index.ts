@@ -63,6 +63,8 @@ DataSource.initialize()
     });
 
 // Enable graceful stop
-// TODO: test
-process.once('SIGINT', () => bot.stop('graceful shutdown'))
-process.once('SIGTERM', () => bot.stop('graceful shutdown'))
+process.once('SIGTERM', () => {
+    console.log('SIGTERM received. Stopping the bot...');
+    bot.stop('graceful shutdown');
+    NotificationService.stop();
+});
