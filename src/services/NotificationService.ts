@@ -57,7 +57,7 @@ export class NotificationService {
         console.log(`The notification has been saved:`, notification);
         this.schedule(notification);
 
-        this.messageService.sendMessage(entity.chat.id, this.formatNotificationCreated(entity));
+        this.messageService.sendMessage(entity.chat.id, this.formatNotificationCreated(notification));
 
         return notification;
     }
@@ -67,6 +67,10 @@ export class NotificationService {
         const name = this.getName(notification);
         const task = this.cronService.getTasks().get(name);
         task?.stop();
+    }
+
+    public async findById(id: number): Promise<Notification | null> {
+        return await this.notificationRepository.findOneBy({ id });
     }
 
     /**
@@ -136,7 +140,7 @@ export class NotificationService {
         return `notification-${notification.id}`;
     }
 
-    public formatNotificationCreated(notification: Pick<Notification, 'train' | 'schedule'>): Format.FmtString {
+    public formatNotificationCreated(notification: Notification): Format.FmtString {
         const lines = [
             Format.join`✅ Értesítés létrehozva 🚂 ${Format.bold(notification.train)} számú vonathoz.`,
         ];
@@ -145,12 +149,14 @@ export class NotificationService {
             lines.push(
                 // TODO: format the date
                 Format.join`⏰ ${Format.bold(notification.schedule.date)}`,
+                Format.join`Törlés: /leiratkozas_${notification.id}`,
             );
         } else if (notification.schedule.type === 'weekly') {
             const days = notification.schedule.days.map((day) => DaysOfTheWeek[day]);
             lines.push(
                 Format.join`📅 ${Format.bold(days.join(', '))}`,
                 Format.join`⏰ ${Format.bold(notification.schedule.time)}`,
+                Format.join`Leiratkozás: /leiratkozas_${notification.id}`,
             );
         }
 

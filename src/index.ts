@@ -15,6 +15,7 @@ import { useAdapter } from '@type-cacheable/node-cache-adapter';
 import CreateNotificationStageMiddleware from './middlewares/stages/CreateNotificationStage';
 import { MiddlewareInterface } from "./middlewares/MiddlewareInterface";
 import NotificationService from "./services/NotificationService";
+import UnsubscribeNotificationCommand from "./middlewares/UnsubscribeNotificationCommand";
 
 CacheManager.setClient(useAdapter(new NodeCache()));
 
@@ -26,6 +27,7 @@ const middlewares = [
     HydrateSessionWithChatEntityMiddleware,
     LogMiddleware,
     CreateNotificationStageMiddleware,
+    UnsubscribeNotificationCommand,
     StartCommand,
     HelpCommand,
     StationCommand,
